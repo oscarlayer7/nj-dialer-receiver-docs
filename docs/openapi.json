@@ -1,0 +1,314 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "NJ-DIALER API",
+        "description": "API para originar y controlar llamadas masivas.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://my-default-host.com",
+            "description": "Servidor base"
+        }
+    ],
+    "paths": {
+        "/api/break": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Interrumpir la acción en curso de una llamada",
+                "operationId": "7fa92614b8d2d7f25361baa93cb1be72",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_id"
+                                ],
+                                "properties": {
+                                    "call_id": {
+                                        "type": "string",
+                                        "example": "01H..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Queued"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/hangup": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Colgar una llamada",
+                "operationId": "3f575331c88315984f3aeb4b40177c0e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_id"
+                                ],
+                                "properties": {
+                                    "call_id": {
+                                        "type": "string",
+                                        "example": "01H..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Queued"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/originate-call": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Originar una llamada",
+                "operationId": "e52f1b83c526d4d5511f48b0232af9b4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "request_id": {
+                                        "description": "ID de idempotencia opcional. Si se envía el mismo request_id, se devuelve el resultado original sin crear duplicados.",
+                                        "type": "string",
+                                        "maxLength": 64,
+                                        "example": "01JRX..."
+                                    },
+                                    "phone": {
+                                        "description": "Número de teléfono en formato internacional E.164",
+                                        "type": "string",
+                                        "example": "+14155552671"
+                                    },
+                                    "source": {
+                                        "description": "Origen opcional de la llamada",
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "api"
+                                    },
+                                    "webhook_url_status": {
+                                        "description": "URL opcional para recibir actualizaciones de estado de la llamada",
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://example.com/webhook-status"
+                                    },
+                                    "vmd_enabled": {
+                                        "description": "Valor opcional de VMD enviado por el cliente. Puede ser booleano o string.",
+                                        "oneOf": [
+                                            {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            {
+                                                "type": "string",
+                                                "example": "https://example.com/vmd"
+                                            }
+                                        ]
+                                    },
+                                    "flow": {
+                                        "description": "Configuración opcional del flujo de la llamada. Si se envía, debe incluir al menos un paso en 'steps'.",
+                                        "properties": {
+                                            "steps": {
+                                                "description": "Lista de pasos a ejecutar en orden",
+                                                "type": "array",
+                                                "items": {
+                                                    "required": [
+                                                        "action"
+                                                    ],
+                                                    "properties": {
+                                                        "action": {
+                                                            "description": "Tipo de acción a ejecutar",
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "say",
+                                                                "audio_fork_start"
+                                                            ]
+                                                        },
+                                                        "text": {
+                                                            "description": "Texto a reproducir cuando la acción es 'say'",
+                                                            "type": "string",
+                                                            "maxLength": 500
+                                                        },
+                                                        "voice": {
+                                                            "description": "Voz opcional para acciones 'say'",
+                                                            "type": "string",
+                                                            "maxLength": 50
+                                                        },
+                                                        "wss_url": {
+                                                            "description": "WebSocket URL para audio_fork_start",
+                                                            "type": "string",
+                                                            "example": "wss://example.com/stream"
+                                                        },
+                                                        "metadata": {
+                                                            "description": "Metadata opcional para audio_fork_start",
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "minItems": 1
+                                            }
+                                        },
+                                        "type": "object",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Queued"
+                    },
+                    "422": {
+                        "description": "Validation error or no route"
+                    }
+                }
+            }
+        },
+        "/api/say": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Decir texto en una llamada",
+                "operationId": "2451fbb6278ddb758ce7eebc179cb1dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_id",
+                                    "text",
+                                    "voice"
+                                ],
+                                "properties": {
+                                    "call_id": {
+                                        "type": "string",
+                                        "example": "01HXXXXXXXXXXXXXX"
+                                    },
+                                    "text": {
+                                        "type": "string",
+                                        "example": "Hola, gracias por contestar."
+                                    },
+                                    "voice": {
+                                        "type": "string",
+                                        "example": "ES-MX-FEMALE-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Queued"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/audio-fork-start": {
+            "post": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Start audio fork (stream)",
+                "operationId": "6cf9f3b9ae3864cdd0c4d7258a5eb78c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_id",
+                                    "wss_url"
+                                ],
+                                "properties": {
+                                    "call_id": {
+                                        "type": "string",
+                                        "example": "01H..."
+                                    },
+                                    "wss_url": {
+                                        "type": "string",
+                                        "example": "wss://example.com/stream"
+                                    },
+                                    "mix_type": {
+                                        "type": "string",
+                                        "example": "mono"
+                                    },
+                                    "sampling_rate": {
+                                        "type": "integer",
+                                        "example": 8000
+                                    },
+                                    "bugname": {
+                                        "type": "string",
+                                        "example": "stream_01"
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "example": {
+                                            "agent_id": "123"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Queued"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Calls",
+            "description": "Operaciones para originar y controlar llamadas"
+        }
+    ]
+}

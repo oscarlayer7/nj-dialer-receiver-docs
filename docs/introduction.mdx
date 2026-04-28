@@ -1,0 +1,27 @@
+---
+title: "Introducción"
+description: "API para originar y controlar llamadas masivas."
+---
+
+## Autenticación
+
+Todos los endpoints requieren autenticación via **Bearer Token** (Laravel Sanctum).
+
+```bash
+Authorization: Bearer <tu-token>
+```
+
+## Endpoints disponibles
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/originate-call` | Originar una llamada |
+| POST | `/api/say` | Reproducir texto en una llamada |
+| POST | `/api/audio-fork-start` | Iniciar stream de audio |
+| POST | `/api/break` | Interrumpir la acción en curso |
+| POST | `/api/hangup` | Colgar una llamada |
+
+## Respuestas comunes
+
+- **202 Accepted** — La acción fue encolada correctamente.
+- **422 Unprocessable Entity** — Error de validación o sin ruta disponible.

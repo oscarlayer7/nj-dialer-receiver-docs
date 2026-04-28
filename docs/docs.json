@@ -7,13 +7,14 @@
     "light": "#07C983",
     "dark": "#0D9373"
   },
-  "favicon": "",
+  "favicon": "/favicon.svg",
   "navigation": {
     "groups": [
       {
         "group": "Introducción",
         "pages": [
-          "introduction"
+          "introduction",
+          "quickstart"
         ]
       },
       {

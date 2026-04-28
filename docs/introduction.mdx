@@ -1,27 +1,115 @@
 ---
 title: "Introducción"
-description: "API para originar y controlar llamadas masivas."
+description: "La API de NJ Dialer te permite originar y controlar llamadas telefónicas de forma programática."
 ---
+
+## ¿Qué es NJ Dialer?
+
+NJ Dialer es una API diseñada para sistemas de llamadas masivas. Con ella puedes **originar llamadas**, **reproducir mensajes de voz**, **transmitir audio en tiempo real** y **controlar el estado de cada llamada** desde tu aplicación.
+
+<CardGroup cols={2}>
+  <Card title="Origina llamadas" icon="phone">
+    Inicia llamadas a cualquier número en formato E.164 con una sola petición.
+  </Card>
+  <Card title="Controla en tiempo real" icon="sliders">
+    Envía texto a voz, inicia streams de audio o cuelga llamadas en cualquier momento.
+  </Card>
+  <Card title="Modelo asíncrono" icon="bolt">
+    Todas las acciones se encolan y procesan de forma asíncrona. La API responde de inmediato con `202 Accepted`.
+  </Card>
+  <Card title="Idempotencia" icon="shield-check">
+    Envía un `request_id` propio para evitar duplicados si reintenta la misma petición.
+  </Card>
+</CardGroup>
+
+## Cómo funciona
+
+El ciclo de vida de una llamada sigue este flujo:
+
+<Steps>
+  <Step title="Originar la llamada">
+    Llamas a `POST /api/originate-call` con el número de teléfono. Recibes un `call_id` que identifica la llamada de ahora en adelante.
+  </Step>
+  <Step title="Controlar la llamada">
+    Usando el `call_id`, puedes enviar texto a voz (`/say`), iniciar un stream de audio (`/audio-fork-start`), o interrumpir la acción en curso (`/break`).
+  </Step>
+  <Step title="Finalizar la llamada">
+    Cuando terminás, llamás a `POST /api/hangup` con el `call_id` para colgar.
+  </Step>
+</Steps>
+
+<Note>
+  Todas las acciones de control (`/say`, `/audio-fork-start`, `/break`, `/hangup`) requieren que la llamada ya exista. Guardá el `call_id` que devuelve `/originate-call`.
+</Note>
 
 ## Autenticación
 
-Todos los endpoints requieren autenticación via **Bearer Token** (Laravel Sanctum).
+La API usa **Bearer Token** vía Laravel Sanctum. Incluí tu token en el header de cada petición.
 
 ```bash
-Authorization: Bearer <tu-token>
+Authorization: Bearer <tu_token>
 ```
 
-## Endpoints disponibles
+<Warning>
+  Nunca expongas tu token en código del lado del cliente. Todas las peticiones deben hacerse desde tu backend.
+</Warning>
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/api/originate-call` | Originar una llamada |
-| POST | `/api/say` | Reproducir texto en una llamada |
-| POST | `/api/audio-fork-start` | Iniciar stream de audio |
-| POST | `/api/break` | Interrumpir la acción en curso |
-| POST | `/api/hangup` | Colgar una llamada |
+## URL base
 
-## Respuestas comunes
+```
+https://nj-dialer-receiver.rd.l7labs.art/api
+```
 
-- **202 Accepted** — La acción fue encolada correctamente.
-- **422 Unprocessable Entity** — Error de validación o sin ruta disponible.
+## Modelo de respuesta
+
+La API siempre responde con JSON. Las respuestas exitosas de acciones de control incluyen:
+
+```json
+{
+  "request_id": "01JRX5Y2K3...",
+  "status": "queued"
+}
+```
+
+La respuesta de originar una llamada incluye adicionalmente el `call_id`:
+
+```json
+{
+  "request_id": "01JRX5Y2K3...",
+  "call_id": "01JRX5Y2K3...",
+  "status": "queued",
+  "topic": "calls"
+}
+```
+
+## Códigos de respuesta
+
+| Código | Significado |
+|--------|-------------|
+| `202 Accepted` | La acción fue recibida y encolada correctamente. |
+| `422 Unprocessable Entity` | Error de validación en el body, o no hay ruta disponible para el número. |
+| `401 Unauthorized` | Token inválido o ausente. |
+
+## Manejo de errores
+
+Cuando ocurre un error de validación, la respuesta incluye detalles del campo afectado:
+
+```json
+{
+  "message": "The phone field is required.",
+  "errors": {
+    "phone": ["The phone field is required."]
+  }
+}
+```
+
+Cuando no hay ruta disponible para el número destino:
+
+```json
+{
+  "request_id": "01JRX5Y2K3...",
+  "call_id": "01JRX5Y2K3...",
+  "status": "no_route",
+  "reason_code": "no_carrier"
+}
+```

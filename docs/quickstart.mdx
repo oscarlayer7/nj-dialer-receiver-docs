@@ -1,0 +1,142 @@
+---
+title: "Quickstart"
+description: "Origina y controla tu primera llamada en menos de 5 minutos."
+---
+
+## Antes de empezar
+
+Necesitas:
+- Un **Bearer Token** válido
+- Un número de teléfono destino en **formato E.164** (ej: `+14155552671`)
+
+## 1. Origina una llamada
+
+Envía una petición `POST /api/originate-call` con el número destino.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/originate-call \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+14155552671"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/originate-call', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    phone: '+14155552671',
+  }),
+});
+
+const data = await response.json();
+console.log(data.call_id); // guarda este valor
+```
+
+```php PHP
+$response = Http::withToken('<tu_token>')
+    ->post('https://nj-dialer-receiver.rd.l7labs.art/api/originate-call', [
+        'phone' => '+14155552671',
+    ]);
+
+$callId = $response->json('call_id');
+```
+
+</CodeGroup>
+
+**Respuesta:**
+
+```json
+{
+  "request_id": "01JRX5Y2K3ABCDEF",
+  "call_id": "01JRX5Y2K3GHIJKL",
+  "status": "queued",
+  "topic": "calls"
+}
+```
+
+<Note>
+  Guarda el `call_id`. Lo necesitas para todos los pasos siguientes.
+</Note>
+
+## 2. Reproduce un mensaje cuando contesten
+
+Una vez que el destinatario contesta, envía texto a voz con `POST /api/say`.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/say \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL",
+    "text": "Hola, le llamamos para informarle sobre su póliza.",
+    "voice": "ES-MX-FEMALE-01"
+  }'
+```
+
+```javascript Node.js
+await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/say', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    call_id: data.call_id,
+    text: 'Hola, le llamamos para informarle sobre su póliza.',
+    voice: 'ES-MX-FEMALE-01',
+  }),
+});
+```
+
+</CodeGroup>
+
+## 3. Cuelga la llamada
+
+Cuando termines, cuelga con `POST /api/hangup`.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/hangup \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL"
+  }'
+```
+
+```javascript Node.js
+await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/hangup', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ call_id: data.call_id }),
+});
+```
+
+</CodeGroup>
+
+---
+
+## Próximos pasos
+
+<CardGroup cols={2}>
+  <Card title="Originar llamada" icon="phone-arrow-up-right" href="/api-reference/originate-call">
+    Explora todas las opciones: flujos automáticos, VMD, webhooks de estado.
+  </Card>
+  <Card title="Audio Fork" icon="waveform" href="/api-reference/audio-fork-start">
+    Transmite el audio de la llamada a tu servidor en tiempo real via WebSocket.
+  </Card>
+</CardGroup>

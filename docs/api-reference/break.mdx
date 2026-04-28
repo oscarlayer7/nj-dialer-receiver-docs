@@ -1,4 +1,71 @@
 ---
 title: "Interrumpir acción"
 openapi: "POST /api/break"
+description: "Detiene la acción en curso de una llamada activa (texto a voz, stream de audio, etc.)."
 ---
+
+## Descripción
+
+Interrumpe la acción que se está ejecutando en este momento en la llamada, sin colgarla. La llamada permanece activa y disponible para recibir nuevas acciones.
+
+Usa este endpoint cuando necesitas:
+
+- Cortar un mensaje de texto a voz antes de que termine
+- Detener un stream de audio fork en curso
+- Limpiar el estado de la llamada para enviar una nueva acción
+
+<Note>
+  Este endpoint **no cuelga la llamada**. Solo interrumpe la acción en progreso. Para colgar, usa [`/hangup`](/api-reference/hangup).
+</Note>
+
+## Ejemplo de uso
+
+Un caso típico: el sistema está reproduciendo un mensaje con `/say`, pero el agente necesita tomar control y enviar un mensaje diferente. Primero interrumpe con `/break`, luego envía el nuevo mensaje.
+
+```
+1. POST /say      → "Hola, le llamamos para..."  (reproduciendo)
+2. POST /break    → interrumpe el mensaje
+3. POST /say      → "Buen día, lo comunico con un asesor."
+```
+
+## Ejemplos
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/break \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL"
+  }'
+```
+
+```javascript Node.js
+await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/break', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ call_id: '01JRX5Y2K3GHIJKL' }),
+});
+```
+
+```php PHP
+Http::withToken('<tu_token>')
+    ->post('https://nj-dialer-receiver.rd.l7labs.art/api/break', [
+        'call_id' => '01JRX5Y2K3GHIJKL',
+    ]);
+```
+
+</CodeGroup>
+
+## Respuesta
+
+```json
+{
+  "request_id": "01JRX5Y2K3ABCDEF",
+  "status": "queued"
+}
+```

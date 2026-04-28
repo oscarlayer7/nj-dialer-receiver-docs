@@ -1,4 +1,105 @@
 ---
 title: "Iniciar audio fork"
 openapi: "POST /api/audio-fork-start"
+description: "Inicia la transmisión del audio de una llamada activa hacia un servidor WebSocket."
 ---
+
+## Descripción
+
+El audio fork transmite el audio de una llamada en tiempo real hacia una URL WebSocket (`wss://`) de tu elección. Esto te permite procesar el audio en tu propio servidor — por ejemplo, para transcripción, análisis de sentimientos, o asistencia de agente en vivo.
+
+<Note>
+  Tu servidor WebSocket debe estar escuchando en la `wss_url` antes de hacer esta petición. La conexión se establece de forma inmediata al procesar la acción.
+</Note>
+
+## Cómo funciona
+
+```
+Llamada activa
+    │
+    ▼
+NJ Dialer captura el audio
+    │
+    ▼
+Transmite frames de audio via WebSocket
+    │
+    ▼
+Tu servidor en wss://mi-servidor.com/stream
+    │
+    ▼
+Procesás el audio (transcripción, IA, grabación, etc.)
+```
+
+## Parámetros opcionales
+
+**`mix_type`** — Define qué canales de audio se transmiten:
+
+| Valor | Descripción |
+|-------|-------------|
+| `mono` | Audio mezclado de ambos lados (por defecto) |
+| `stereo` | Canal separado por cada lado de la llamada |
+
+**`sampling_rate`** — Frecuencia de muestreo en Hz. Valores comunes: `8000`, `16000`. Por defecto: `8000`.
+
+**`metadata`** — Objeto JSON arbitrario que se envía junto con el stream. Útil para identificar la llamada en tu servidor (por ejemplo, el ID de agente, ID de campaña, etc.).
+
+## Ejemplos
+
+<CodeGroup>
+
+```bash cURL básico
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL",
+    "wss_url": "wss://mi-servidor.com/stream"
+  }'
+```
+
+```bash cURL con opciones
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL",
+    "wss_url": "wss://mi-servidor.com/stream",
+    "mix_type": "mono",
+    "sampling_rate": 16000,
+    "metadata": {
+      "agent_id": "agent-456",
+      "campaign": "agosto-2025"
+    }
+  }'
+```
+
+```javascript Node.js
+await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    call_id: '01JRX5Y2K3GHIJKL',
+    wss_url: 'wss://mi-servidor.com/stream',
+    sampling_rate: 16000,
+    metadata: { agent_id: 'agent-456' },
+  }),
+});
+```
+
+</CodeGroup>
+
+## Respuesta
+
+```json
+{
+  "request_id": "01JRX5Y2K3ABCDEF",
+  "status": "queued"
+}
+```
+
+<Tip>
+  Para detener el stream antes de que la llamada termine, usa `/break` para interrumpir la acción en curso.
+</Tip>

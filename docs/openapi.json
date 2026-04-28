@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://my-default-host.com",
+            "url": "https://nj-dialer-receiver.rd.l7labs.art",
             "description": "Servidor base"
         }
     ],

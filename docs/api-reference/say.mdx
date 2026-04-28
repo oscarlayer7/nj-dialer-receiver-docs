@@ -1,4 +1,78 @@
 ---
 title: "Decir texto"
 openapi: "POST /api/say"
+description: "Reproduce un mensaje de texto a voz en una llamada activa."
 ---
+
+## Descripción
+
+Convierte texto en voz y lo reproduce al destinatario de una llamada activa. La acción se encola de inmediato y se ejecuta en la llamada de forma asíncrona.
+
+<Warning>
+  La llamada debe estar activa (contestada) para que el mensaje se reproduzca. Si la llamada no ha sido contestada aún, el mensaje se ejecutará cuando lo sea, dependiendo del estado de la cola.
+</Warning>
+
+## Voces disponibles
+
+El parámetro `voice` define el idioma y perfil de voz que se usará para sintetizar el texto.
+
+| Valor | Idioma | Perfil |
+|-------|--------|--------|
+| `ES-MX-FEMALE-01` | Español (México) | Femenino |
+| `ES-MX-MALE-01` | Español (México) | Masculino |
+| `EN-US-FEMALE-01` | Inglés (EE.UU.) | Femenino |
+| `EN-US-MALE-01` | Inglés (EE.UU.) | Masculino |
+
+<Tip>
+  Confirma las voces disponibles con el equipo de operaciones, ya que pueden variar según la configuración del proveedor.
+</Tip>
+
+## Ejemplos
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/say \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL",
+    "text": "Hola, le llamamos para informarle sobre su cuenta.",
+    "voice": "ES-MX-FEMALE-01"
+  }'
+```
+
+```javascript Node.js
+await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/say', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <tu_token>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    call_id: '01JRX5Y2K3GHIJKL',
+    text: 'Hola, le llamamos para informarle sobre su cuenta.',
+    voice: 'ES-MX-FEMALE-01',
+  }),
+});
+```
+
+```php PHP
+Http::withToken('<tu_token>')
+    ->post('https://nj-dialer-receiver.rd.l7labs.art/api/say', [
+        'call_id' => '01JRX5Y2K3GHIJKL',
+        'text'    => 'Hola, le llamamos para informarle sobre su cuenta.',
+        'voice'   => 'ES-MX-FEMALE-01',
+    ]);
+```
+
+</CodeGroup>
+
+## Respuesta
+
+```json
+{
+  "request_id": "01JRX5Y2K3ABCDEF",
+  "status": "queued"
+}
+```

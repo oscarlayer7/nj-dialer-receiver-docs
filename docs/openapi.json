@@ -30,7 +30,7 @@
                                 "properties": {
                                     "call_id": {
                                         "type": "string",
-                                        "example": "01H..."
+                                        "example": "01HXXXXXXXXXXXXXX"
                                     }
                                 },
                                 "type": "object"
@@ -66,7 +66,7 @@
                                 "properties": {
                                     "call_id": {
                                         "type": "string",
-                                        "example": "01H..."
+                                        "example": "01HXXXXXXXXXXXXXX"
                                     }
                                 },
                                 "type": "object"
@@ -168,7 +168,7 @@
                                                         "wss_url": {
                                                             "description": "WebSocket URL para audio_fork_start",
                                                             "type": "string",
-                                                            "example": "wss://autoagent-og-interface.rd.l7labs.art"
+                                                            "example": "wss://your-agent-server.example.com"
                                                         },
                                                         "metadata": {
                                                             "description": "Metadata opcional para audio_fork_start",
@@ -269,11 +269,11 @@
                                 "properties": {
                                     "call_id": {
                                         "type": "string",
-                                        "example": "01H..."
+                                        "example": "01HXXXXXXXXXXXXXX"
                                     },
                                     "wss_url": {
                                         "type": "string",
-                                        "example": "wss://autoagent-og-interface.rd.l7labs.art"
+                                        "example": "wss://your-agent-server.example.com"
                                     },
                                     "mix_type": {
                                         "type": "string",

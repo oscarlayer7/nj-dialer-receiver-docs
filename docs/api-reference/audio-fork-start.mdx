@@ -24,7 +24,7 @@ curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
   -H "Content-Type: application/json" \
   -d '{
     "call_id": "01JRX5Y2K3GHIJKL",
-    "wss_url": "wss://autoagent-og-interface.rd.l7labs.art"
+    "wss_url": "wss://your-agent-server.example.com"
   }'
 ```
 
@@ -49,7 +49,7 @@ curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
   -H "Content-Type: application/json" \
   -d '{
     "call_id": "01JRX5Y2K3GHIJKL",
-    "wss_url": "wss://autoagent-og-interface.rd.l7labs.art",
+    "wss_url": "wss://your-agent-server.example.com",
     "mix_type": "mono",
     "sampling_rate": 16000,
     "metadata": {

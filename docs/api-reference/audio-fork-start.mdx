@@ -4,30 +4,28 @@ openapi: "POST /api/audio-fork-start"
 description: "Inicia la transmisión del audio de una llamada activa hacia un servidor WebSocket."
 ---
 
-## Descripción
+## ¿Qué es el audio fork?
 
-El audio fork transmite el audio de una llamada en tiempo real hacia una URL WebSocket (`wss://`) de tu elección. Esto te permite procesar el audio en tu propio servidor — por ejemplo, para transcripción, análisis de sentimientos, o asistencia de agente en vivo.
-
-<Note>
-  Tu servidor WebSocket debe estar escuchando en la `wss_url` antes de hacer esta petición. La conexión se establece de forma inmediata al procesar la acción.
-</Note>
-
-## Cómo funciona
+El audio fork conecta la llamada activa a una URL WebSocket (`wss://`) de tu elección. A partir de ese momento, el audio de la llamada se transmite en tiempo real a ese servidor, que puede procesarlo como necesite: un agente de IA que responde, transcripción en vivo, grabación, etc.
 
 ```
-Llamada activa
-    │
-    ▼
-NJ Dialer captura el audio
-    │
-    ▼
-Transmite frames de audio via WebSocket
-    │
-    ▼
-Tu servidor en wss://mi-servidor.com/stream
-    │
-    ▼
-Procesás el audio (transcripción, IA, grabación, etc.)
+Llamada activa  →  NJ Dialer  →  wss://tu-servidor.com  →  Agente / IA / Grabación
+```
+
+<Note>
+  El servidor WebSocket debe estar escuchando antes de llamar a este endpoint. La conexión se establece en el momento en que se procesa la acción.
+</Note>
+
+## Ejemplo básico
+
+```bash
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "call_id": "01JRX5Y2K3GHIJKL",
+    "wss_url": "wss://autoagent-og-interface.rd.l7labs.art"
+  }'
 ```
 
 ## Parámetros opcionales
@@ -41,29 +39,17 @@ Procesás el audio (transcripción, IA, grabación, etc.)
 
 **`sampling_rate`** — Frecuencia de muestreo en Hz. Valores comunes: `8000`, `16000`. Por defecto: `8000`.
 
-**`metadata`** — Objeto JSON arbitrario que se envía junto con el stream. Útil para identificar la llamada en tu servidor (por ejemplo, el ID de agente, ID de campaña, etc.).
+**`metadata`** — Objeto JSON libre que se envía junto con el stream. Útil para que tu servidor identifique la llamada (ID de agente, campaña, etc.).
 
-## Ejemplos
+## Ejemplo con opciones
 
-<CodeGroup>
-
-```bash cURL básico
+```bash
 curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
   -H "Authorization: Bearer <tu_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "call_id": "01JRX5Y2K3GHIJKL",
-    "wss_url": "wss://mi-servidor.com/stream"
-  }'
-```
-
-```bash cURL con opciones
-curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
-  -H "Authorization: Bearer <tu_token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "call_id": "01JRX5Y2K3GHIJKL",
-    "wss_url": "wss://mi-servidor.com/stream",
+    "wss_url": "wss://autoagent-og-interface.rd.l7labs.art",
     "mix_type": "mono",
     "sampling_rate": 16000,
     "metadata": {
@@ -72,24 +58,6 @@ curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start \
     }
   }'
 ```
-
-```javascript Node.js
-await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer <tu_token>',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    call_id: '01JRX5Y2K3GHIJKL',
-    wss_url: 'wss://mi-servidor.com/stream',
-    sampling_rate: 16000,
-    metadata: { agent_id: 'agent-456' },
-  }),
-});
-```
-
-</CodeGroup>
 
 ## Respuesta
 
@@ -101,5 +69,5 @@ await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/audio-fork-start', {
 ```
 
 <Tip>
-  Para detener el stream antes de que la llamada termine, usa `/break` para interrumpir la acción en curso.
+  Para detener el stream antes de que la llamada termine, usa `/break`.
 </Tip>

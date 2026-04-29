@@ -17,9 +17,6 @@ NJ Dialer es una API diseñada para sistemas de llamadas masivas. Con ella puede
   <Card title="Modelo asíncrono" icon="bolt">
     Todas las acciones se encolan y procesan de forma asíncrona. La API responde de inmediato con `202 Accepted`.
   </Card>
-  <Card title="Idempotencia" icon="shield-check">
-    Envía un `request_id` propio para evitar duplicados si reintenta la misma petición.
-  </Card>
 </CardGroup>
 
 ## Cómo funciona
@@ -34,7 +31,7 @@ El ciclo de vida de una llamada sigue este flujo:
     Usando el `call_id`, puedes enviar texto a voz (`/say`), iniciar un stream de audio (`/audio-fork-start`), o interrumpir la acción en curso (`/break`).
   </Step>
   <Step title="Finalizar la llamada">
-    Cuando terminás, llamás a `POST /api/hangup` con el `call_id` para colgar.
+    Cuando terminas, llamas a `POST /api/hangup` con el `call_id` para colgar.
   </Step>
 </Steps>
 

@@ -151,8 +151,8 @@
                                                             "description": "Tipo de acción a ejecutar",
                                                             "type": "string",
                                                             "enum": [
-                                                                "say",
-                                                                "audio_fork_start"
+                                                                "audio_fork_start",
+                                                                "say"
                                                             ]
                                                         },
                                                         "text": {
@@ -168,11 +168,16 @@
                                                         "wss_url": {
                                                             "description": "WebSocket URL para audio_fork_start",
                                                             "type": "string",
-                                                            "example": "wss://example.com/stream"
+                                                            "example": "wss://autoagent-og-interface.rd.l7labs.art"
                                                         },
                                                         "metadata": {
                                                             "description": "Metadata opcional para audio_fork_start",
-                                                            "type": "object"
+                                                            "type": "object",
+                                                            "example": {
+                                                                "nombre": "Juan Pérez",
+                                                                "producto": "seguro de vida",
+                                                                "id_lead": "lead-789"
+                                                            }
                                                         }
                                                     },
                                                     "type": "object"
@@ -268,7 +273,7 @@
                                     },
                                     "wss_url": {
                                         "type": "string",
-                                        "example": "wss://example.com/stream"
+                                        "example": "wss://autoagent-og-interface.rd.l7labs.art"
                                     },
                                     "mix_type": {
                                         "type": "string",

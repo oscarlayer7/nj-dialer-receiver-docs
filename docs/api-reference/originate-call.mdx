@@ -9,27 +9,33 @@ description: "Inicia una llamada telefónica saliente hacia el número indicado.
 Este endpoint inicia una llamada saliente hacia el número de teléfono especificado. La llamada se encola de forma asíncrona — la API responde de inmediato con un `call_id` que usarás para controlar la llamada en los pasos siguientes.
 
 <Note>
-  Este es siempre el primer paso. Necesitás el `call_id` que devuelve este endpoint para poder usar `/say`, `/audio-fork-start`, `/break` o `/hangup`.
+  Este es siempre el primer paso. Necesitas el `call_id` que devuelve este endpoint para poder usar `/say`, `/audio-fork-start`, `/break` o `/hangup`.
 </Note>
 
-## Idempotencia
+## Flujo de la llamada (flow)
 
-Puedes enviar un `request_id` propio para evitar crear llamadas duplicadas si reintenta la petición (por ejemplo, ante un timeout de red). Si envías el mismo `request_id` dos veces, la segunda petición devuelve el resultado de la primera sin originar una nueva llamada.
+El parámetro `flow` define qué va a pasar cuando la llamada sea contestada. Se ejecuta automáticamente — no necesitas hacer ninguna petición adicional.
 
-```json
-{
-  "request_id": "mi-id-unico-123",
-  "phone": "+14155552671"
-}
-```
+Cuando originas una llamada, tienes dos formas de interactuar con ella:
 
-<Tip>
-  Usa un ULID o UUID generado en tu backend como `request_id`. Si no envías uno, la API genera uno automáticamente.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Solo texto a voz (TTS)" icon="message">
+    La API reproduce un mensaje pregrabado al destinatario. Solo necesitas enviar `text` y `voice`. Es la opción más simple.
+  </Card>
+  <Card title="Audio fork + agente" icon="waveform">
+    El audio de la llamada se transmite en tiempo real a tu servidor via WebSocket. Ideal si tienes un agente de IA o un sistema que necesita escuchar y responder dinámicamente.
+  </Card>
+</CardGroup>
 
-## Flujos automáticos
+### Opción 1 — Mensaje de voz (TTS)
 
-El parámetro `flow` te permite definir una secuencia de acciones que se ejecutarán automáticamente una vez que la llamada sea contestada, sin necesidad de hacer peticiones adicionales.
+Usa `action: "say"` con los siguientes parámetros:
+
+| Parámetro | Requerido | Descripción |
+|-----------|-----------|-------------|
+| `action` | Sí | Valor fijo: `"say"` |
+| `text` | Sí | El texto que se reproducirá al destinatario |
+| `voice` | Sí | La voz a usar (ej: `"ES-MX-FEMALE-01"`) |
 
 ```json
 {
@@ -38,12 +44,37 @@ El parámetro `flow` te permite definir una secuencia de acciones que se ejecuta
     "steps": [
       {
         "action": "say",
-        "text": "Hola, le llamamos de parte de su banco.",
+        "text": "Hola, le llamamos para informarle sobre su cuenta.",
         "voice": "ES-MX-FEMALE-01"
-      },
+      }
+    ]
+  }
+}
+```
+
+### Opción 2 — Agente en tiempo real (audio fork)
+
+Usa `action: "audio_fork_start"` para transmitir el audio de la llamada a un servidor WebSocket. Ese servidor puede ser un agente de IA u otro sistema que escucha y responde de forma dinámica.
+
+| Parámetro | Requerido | Descripción |
+|-----------|-----------|-------------|
+| `action` | Sí | Valor fijo: `"audio_fork_start"` |
+| `wss_url` | Sí | URL del servidor WebSocket que recibirá el audio |
+| `metadata` | No | Datos del lead que se envían al servidor WebSocket para que el agente los use durante la llamada (nombre, producto, contexto, etc.) |
+
+```json
+{
+  "phone": "+14155552671",
+  "flow": {
+    "steps": [
       {
         "action": "audio_fork_start",
-        "wss_url": "wss://mi-servidor.com/stream"
+        "wss_url": "wss://autoagent-og-interface.rd.l7labs.art",
+        "metadata": {
+          "nombre": "Juan Pérez",
+          "producto": "seguro de vida",
+          "id_lead": "lead-789"
+        }
       }
     ]
   }
@@ -52,13 +83,14 @@ El parámetro `flow` te permite definir una secuencia de acciones que se ejecuta
 
 ## Detección de contestador (VMD)
 
-El parámetro `vmd_enabled` activa la detección de contestador automático. Podés enviarlo como `true` para usar la URL de VMD configurada por defecto, o como una URL específica para enrutar a tu propio servicio.
+El parámetro `vmd_enabled` permite detectar si la llamada fue contestada por una persona real o por un contestador automático.
 
-| Valor | Comportamiento |
-|-------|---------------|
-| `true` | Usa la URL de VMD configurada en el servidor |
-| `"wss://mi-vmd.com/detect"` | Usa tu propia URL de VMD |
-| Ausente | VMD desactivado |
+Tienes dos opciones:
+
+- **`true`** — usa el servicio de VMD predeterminado de NJ Dialer. Es la opción más sencilla si no tienes un servicio propio.
+- **`"wss://tu-servicio.com/vmd"`** — apunta a tu propio servicio de detección via WebSocket. Útil si tienes un modelo de VMD personalizado.
+
+Si no envías este parámetro, la detección de contestador queda desactivada.
 
 ## Webhooks de estado
 
@@ -76,28 +108,64 @@ Si envías `webhook_url_status`, recibirás actualizaciones del estado de la lla
 <CodeGroup>
 
 ```bash Llamada simple
-curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/originate-call \
-  -H "Authorization: Bearer <tu_token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "+14155552671"
+curl --request POST \
+  --url https://nj-dialer-receiver.rd.l7labs.art/api/originate-call \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "phone": "+14155552671",
+    "webhook_url_status": "https://example.com/webhook-status",
+    "vmd_enabled": true,
+    "flow": {
+      "steps": [
+        {
+          "action": "audio_fork_start",
+          "wss_url": "wss://autoagent-og-interface.rd.l7labs.art",
+          "metadata": {
+            "name": "Carlos Mendoza",
+            "product": "vida plus",
+            "brand": "Seguros MX",
+            "amount": 4500
+          }
+        }
+      ]
+    }
   }'
 ```
 
-```bash Con flujo automático
+```bash Con say (TTS)
 curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/originate-call \
   -H "Authorization: Bearer <tu_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "+14155552671",
-    "source": "campana-agosto",
-    "webhook_url_status": "https://mi-app.com/webhooks/llamadas",
     "flow": {
       "steps": [
         {
           "action": "say",
           "text": "Hola, este es un mensaje importante.",
           "voice": "ES-MX-FEMALE-01"
+        }
+      ]
+    }
+  }'
+```
+
+```bash Con audio fork
+curl -X POST https://nj-dialer-receiver.rd.l7labs.art/api/originate-call \
+  -H "Authorization: Bearer <tu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+14155552671",
+    "flow": {
+      "steps": [
+        {
+          "action": "audio_fork_start",
+          "wss_url": "wss://autoagent-og-interface.rd.l7labs.art",
+          "metadata": {
+            "nombre": "Juan Pérez",
+            "id_lead": "lead-789"
+          }
         }
       ]
     }
@@ -112,9 +180,7 @@ const response = await fetch('https://nj-dialer-receiver.rd.l7labs.art/api/origi
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    request_id: crypto.randomUUID(),
     phone: '+14155552671',
-    source: 'mi-sistema',
   }),
 });
 
